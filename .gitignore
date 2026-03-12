@@ -1,0 +1,31 @@
+# Vector database (large, rebuild locally)
+chroma_db/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Compiled bytecode
+*.pyc
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Sentence transformers cache
+.cache/
+
+# Logs
+*.log
