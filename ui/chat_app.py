@@ -1,7 +1,7 @@
 """
 ui/chat_app.py
 
-Streamlit chat interface for the Responsible Medical RAG Assistant.
+Streamlit chat interface for the Hybrid Medical RAG + LLM Assistant.
 
 Usage:
     streamlit run ui/chat_app.py
@@ -17,7 +17,7 @@ from datetime import datetime
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Medical AI Assistant",
+    page_title="Hybrid Medical AI Assistant",
     page_icon="⚕️",
     layout="centered",
     initial_sidebar_state="expanded",
@@ -130,10 +130,14 @@ st.markdown("""
     font-weight: 600;
     letter-spacing: 0.5px;
   }
-  .mode-retrieval { background: rgba(40,167,69,0.2); color: #5cb85c; border: 1px solid rgba(40,167,69,0.4); }
-  .mode-ollama    { background: rgba(102,16,242,0.2); color: #c084fc; border: 1px solid rgba(102,16,242,0.4); }
-  .mode-blocked   { background: rgba(220,53,69,0.2);  color: #f77; border: 1px solid rgba(220,53,69,0.4); }
-  .mode-no_results{ background: rgba(255,193,7,0.15); color: #ffc107; border: 1px solid rgba(255,193,7,0.35); }
+  .mode-retrieval   { background: rgba(40,167,69,0.2);  color: #5cb85c; border: 1px solid rgba(40,167,69,0.4); }
+  .mode-ollama      { background: rgba(102,16,242,0.2); color: #c084fc; border: 1px solid rgba(102,16,242,0.4); }
+  .mode-blocked     { background: rgba(220,53,69,0.2);  color: #f77;    border: 1px solid rgba(220,53,69,0.4); }
+  .mode-no_results  { background: rgba(255,193,7,0.15); color: #ffc107; border: 1px solid rgba(255,193,7,0.35); }
+  .mode-gemini      { background: rgba(26,115,232,0.22); color: #64b5f6; border: 1px solid rgba(26,115,232,0.5); }
+  .mode-non_medical { background: rgba(255,152,0,0.18); color: #ffb74d; border: 1px solid rgba(255,152,0,0.45); }
+  .mode-llm_fallback{ background: rgba(0,200,150,0.18); color: #4db6ac; border: 1px solid rgba(0,200,150,0.45); }
+  .mode-general     { background: rgba(156,39,176,0.18); color: #ce93d8; border: 1px solid rgba(156,39,176,0.45); }
 
   /* Sidebar */
   section[data-testid="stSidebar"] {
@@ -160,13 +164,13 @@ if "safe_queries" not in st.session_state:
 
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("## ⚕️ Medical AI Assistant")
+    st.markdown("## ⚕️ Hybrid Medical AI Assistant")
     st.markdown("---")
     st.markdown("### ℹ️ About")
     st.info(
         "This assistant answers medical questions using the **MedQuAD dataset** "
         "(47,000+ Q&A pairs from 12 NIH sources). "
-        "It uses **Retrieval-Augmented Generation (RAG)** to provide "
+        "It uses **RAG + Gemini Flash** to retrieve, classify, and rewrite "
         "grounded, cited answers."
     )
     st.markdown("### 📊 Session Stats")
@@ -196,8 +200,10 @@ with st.sidebar:
     st.markdown("### 🔗 Responsible AI Features")
     st.markdown("""
 - ✅ **Safety filter** (self-harm, crisis, illegal advice)
+- ✅ **Query classifier** (medical vs non-medical)
+- ✅ **Gemini Flash** rewriting (structured, clear responses)
+- ✅ **LLM fallback** (when RAG finds no relevant results)
 - ✅ **Citation transparency** (sources shown)  
-- ✅ **Hallucination prevention** (retrieval-grounded)
 - ✅ **Medical disclaimer** on every response
 - ✅ **No patient data stored**
 """)
@@ -205,8 +211,8 @@ with st.sidebar:
 # ── Header ─────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="header-banner">
-  <h1>⚕️ Medical Knowledge Assistant</h1>
-  <p>Grounded answers from 47,000+ NIH medical Q&A pairs · Responsible AI · Source Citations</p>
+  <h1>⚕️ Hybrid Medical AI Assistant</h1>
+  <p>RAG + Gemini Flash · 47,000+ NIH Q&amp;A pairs · Medical Query Classifier · Source Citations</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -227,8 +233,12 @@ for msg in st.session_state.messages:
         css_class = "msg-blocked" if not safe else "msg-assistant"
         mode_css = f"mode-{mode}"
         mode_label = {
-            "retrieval_only": "📚 Retrieval",
-            "ollama": "🤖 Ollama LLM",
+            "retrieval_only": "📚 Retrieval Only",
+            "gemini": "🤖 Gemini AI",
+            "non_medical": "🔄 Out of Scope",
+            "llm_fallback": "💡 LLM Fallback",
+            "general": "💬 General AI",
+            "ollama": "🦙 Ollama LLM",
             "blocked": "🚫 Blocked",
             "no_results": "❓ No Results",
         }.get(mode, mode)

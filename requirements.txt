@@ -8,3 +8,5 @@ streamlit
 pydantic
 lxml
 requests
+google-generativeai
+python-dotenv

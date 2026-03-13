@@ -30,12 +30,14 @@ from utils.prompts import MEDICAL_DISCLAIMER
 
 # ── App setup ──────────────────────────────────────────────────────────────────
 app = FastAPI(
-    title="Responsible Medical RAG Assistant",
+    title="Hybrid Medical RAG + LLM Assistant",
     description=(
         "A medical question-answering API powered by Retrieval-Augmented Generation "
-        "over the MedQuAD dataset. Includes safety filters, citations, and disclaimers."
+        "over the MedQuAD dataset, enhanced with a Gemini LLM layer for query "
+        "classification, answer rewriting, and intelligent fallback. "
+        "Includes safety filters, citations, and disclaimers."
     ),
-    version="1.0.0",
+    version="2.0.0",
 )
 
 # CORS — allow the Streamlit frontend to call this API
@@ -73,6 +75,14 @@ class AskResponse(BaseModel):
     disclaimer: str
     safe: bool
     mode: Optional[str] = "retrieval_only"
+    # mode values:
+    #   gemini         — RAG + Gemini rewrite (best quality)
+    #   non_medical    — query classified as non-medical; LLM redirect
+    #   llm_fallback   — RAG failed; Gemini answered from general knowledge
+    #   retrieval_only — Gemini unavailable; raw RAG passage returned
+    #   no_results     — RAG failed and Gemini unavailable
+    #   ollama         — local Ollama model used
+    #   blocked        — safety filter triggered
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
